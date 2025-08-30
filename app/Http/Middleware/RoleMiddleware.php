@@ -14,17 +14,21 @@ class RoleMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle($request, Closure $next, ...$roles)
-{
-    $user = $request->user();
-    if (!$user) return response()->json(['message' => 'Unauthenticated'], 401);
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
 
-    if (!$user->is_active) return response()->json(['message' => 'Account disabled'], 403);
+        if (!$user->is_active) {
+            return response()->json(['message' => 'Account disabled'], 403);
+        }
 
-    if (!in_array($user->role, $roles)) {
-        return response()->json(['message' => 'Forbidden'], 403);
+        if (!in_array($user->role, $roles)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        return $next($request);
     }
-
-    return $next($request);
-}
 
 }
