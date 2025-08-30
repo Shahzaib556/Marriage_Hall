@@ -55,6 +55,12 @@ class HallController extends Controller
 
         return response()->json(['message' => 'Hall updated successfully', 'hall' => $hall]);
     }
+ 
+    public function myHalls()
+{
+    $halls = Hall::where('owner_id', Auth::id())->get();
+    return response()->json($halls);
+}
 
     // Admin approves hall
     public function approve($id)

@@ -40,6 +40,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware(['auth:sanctum'])->group(function () {
     // Hall Owner
     Route::post('/halls', [HallController::class, 'store']);
+    Route::get('/my-halls', [HallController::class, 'myHalls']);
     Route::put('/halls/{id}', [HallController::class, 'update']);
     Route::delete('/halls/{id}', [HallController::class, 'destroy']);
 

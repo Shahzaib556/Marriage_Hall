@@ -16,18 +16,18 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'phone' => 'required|string|unique:users,phone', // Added phone validation
             'password' => ['required', 'confirmed', Password::min(8)],
             'role' => 'nullable|in:user,owner,admin',
         ]);
 
-        // In AuthController@register
-          $user = User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password), // ✅ very important
+            'phone' => $request->phone, // Added phone field
+            'password' => Hash::make($request->password),
             'role' => $request->role ?? 'user',
         ]);
-
 
         $token = $user->createToken('api_token')->plainTextToken;
 
@@ -42,7 +42,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $data = $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email', // You could also allow phone login
             'password' => 'required|string',
         ]);
 
@@ -62,6 +62,7 @@ class AuthController extends Controller
             'message' => 'Login successful',
             'user' => $user,
             'token' => $token,
+            'role' => $user->role
         ]);
     }
 
