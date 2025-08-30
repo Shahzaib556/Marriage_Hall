@@ -31,9 +31,15 @@ class UserController extends Controller
 
         $user = User::findOrFail($id);
 
-        if (isset($data['role'])) $user->role = $data['role'];
-        if (isset($data['is_active'])) $user->is_active = $data['is_active'];
-        if (isset($data['name'])) $user->name = $data['name'];
+        if (isset($data['role'])) {
+            $user->role = $data['role'];
+        }
+        if (isset($data['is_active'])) {
+            $user->is_active = $data['is_active'];
+        }
+        if (isset($data['name'])) {
+            $user->name = $data['name'];
+        }
 
         $user->save();
 

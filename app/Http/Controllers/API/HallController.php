@@ -19,13 +19,15 @@ class HallController extends Controller
             'capacity' => 'required|integer',
             'pricing' => 'required|numeric',
             'facilities' => 'nullable|array',
+            'facilities.*' => 'nullable|string|max:255',
             'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
         $images = [];
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $images[] = $image->store('halls', 'public');
+                $path = $image->store('halls', 'public');
+                $images[] = $path;
             }
         }
 
@@ -42,25 +44,53 @@ class HallController extends Controller
         return response()->json(['message' => 'Hall submitted for approval', 'hall' => $hall], 201);
     }
 
-    // Owner updates hall
     public function update(Request $request, $id)
     {
+        \Log::debug('Request data:', $request->all());
+        \Log::debug('Files:', $request->file() ?: []);
+        \Log::debug('Content-Type:', [$request->header('Content-Type')]);
+
         $hall = Hall::findOrFail($id);
 
         if ($hall->owner_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $hall->update($request->only(['name', 'location', 'capacity', 'pricing', 'facilities']));
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'capacity' => 'required|integer',
+            'pricing' => 'required|numeric',
+            'facilities' => 'nullable|array',
+            'facilities.*' => 'nullable|string|max:255',
+            'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+        ]);
+
+        $images = [];
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('halls', 'public');
+                $images[] = $path;
+            }
+        }
+
+        $hall->update([
+            'name' => $request->name,
+            'location' => $request->location,
+            'capacity' => $request->capacity,
+            'pricing' => $request->pricing,
+            'facilities' => $request->facilities,
+            'images' => $images,
+        ]);
 
         return response()->json(['message' => 'Hall updated successfully', 'hall' => $hall]);
     }
- 
+
     public function myHalls()
-{
-    $halls = Hall::where('owner_id', Auth::id())->get();
-    return response()->json($halls);
-}
+    {
+        $halls = Hall::where('owner_id', Auth::id())->get();
+        return response()->json($halls);
+    }
 
     // Admin approves hall
     public function approve($id)
@@ -102,4 +132,3 @@ class HallController extends Controller
         return response()->json($halls);
     }
 }
-
