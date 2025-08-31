@@ -20,6 +20,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['role:admin'])->prefix('admin')->group(function () {
         Route::get('/users', [UserController::class, 'index']);
         Route::get('/users/{id}', [UserController::class, 'show']);
+      
         Route::put('/users/{id}', [UserController::class, 'update']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
     });
@@ -45,10 +46,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/halls/{id}', [HallController::class, 'destroy']);
 
     // Admin controls
-    Route::post('/halls/{id}/approve', [HallController::class, 'approve'])
-        ->middleware('role:admin');
-    Route::post('/halls/{id}/deactivate', [HallController::class, 'deactivate'])
-        ->middleware('role:admin');
+    Route::post('/halls/{id}/approve', [HallController::class, 'approve']);
+        // ->middleware('role:admin');
+    Route::post('/halls/{id}/deactivate', [HallController::class, 'deactivate']);
+        // ->middleware('role:admin');
+    Route::get('/admin/halls', [HallController::class, 'adminHalls' ]);
 });
 
 // Public route

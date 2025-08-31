@@ -131,4 +131,15 @@ class HallController extends Controller
         $halls = Hall::where('status', 'approved')->get();
         return response()->json($halls);
     }
+
+    //get all halls for admin with owner info
+    public function adminHalls()
+    {
+        //check is user is admin
+        if(Auth::user()->role !== 'admin'){
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+        $halls = Hall::with('owner') ->get();
+        return response()->json($halls);
+    }
 }
