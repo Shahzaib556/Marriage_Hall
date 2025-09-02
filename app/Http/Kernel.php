@@ -66,16 +66,15 @@ class Kernel extends HttpKernel
         'signed'           => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle'         => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified'         => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        
+
         // Admin specific middleware
-        'admin'            => \App\Http\Middleware\AdminMiddleware::class,
+        // 'admin'            => \App\Http\Middleware\AdminMiddleware::class,
         'admin.guest'      => \App\Http\Middleware\RedirectIfAdmin::class,
 
-        // 'admin'            => \App\Http\Middleware\AdminMiddleware::class,
+        'admin'            => \App\Http\Middleware\AdminMiddleware::class,
         'user'             => \App\Http\Middleware\UserMiddleware::class,
-
         'block.admin' => \App\Http\Middleware\BlockAdminForUserRoutes::class,
-        'role' => \App\Http\Middleware\RoleMiddleware::class,
+        'role' => \App\Http\Middleware\RoleMiddleware::class
 
 
     ];
