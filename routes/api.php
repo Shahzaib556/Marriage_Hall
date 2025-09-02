@@ -6,6 +6,7 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\HallController;
 use App\Http\Controllers\API\AdminDashboardController;
+use App\Http\Controllers\API\BookingController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -54,6 +55,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/admin/halls', [HallController::class, 'adminHalls' ]);
 });
 
+
 // Public route
 Route::get('/halls', [HallController::class, 'index']);
 
@@ -63,4 +65,14 @@ Route::get('/halls/approved', [HallController::class, 'approvedHalls']);
 // Admin Dashboard API (only admin can access)
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'overview']);
+});
+
+// booking routes
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/halls/search', [BookingController::class, 'search']); // 1
+    Route::get('/halls/{id}/availability', [BookingController::class, 'checkAvailability']); // 2
+    Route::post('/bookings', [BookingController::class, 'book']); // 3
+    Route::put('/bookings/{id}/manage', [BookingController::class, 'manage'])->middleware('role:owner'); // 4
+    Route::get('/my-bookings', [BookingController::class, 'myBookings']); // 5
 });
