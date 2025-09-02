@@ -55,3 +55,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
 // Public route
 Route::get('/halls', [HallController::class, 'index']);
+
+Route::get('/halls/approved', [HallController::class, 'approvedHalls']);
