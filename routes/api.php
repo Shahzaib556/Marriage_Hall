@@ -5,6 +5,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\HallController;
+use App\Http\Controllers\API\AdminDashboardController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -57,3 +58,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::get('/halls', [HallController::class, 'index']);
 
 Route::get('/halls/approved', [HallController::class, 'approvedHalls']);
+
+
+// Admin Dashboard API (only admin can access)
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/admin/dashboard', [AdminDashboardController::class, 'overview']);
+});
