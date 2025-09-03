@@ -145,15 +145,14 @@ class HallController extends Controller
 
     // app/Http/Controllers/API/HallController.php
 
-   public function approvedHalls()
+  public function approvedHalls()
    {
-      $halls = Hall::where('is_approved', true)->get();
+    $halls = Hall::where('status', 'approved')->get();
 
-       return response()->json([
+    return response()->json([
         'status' => true,
         'message' => 'Approved halls fetched successfully',
         'data' => $halls
-       ]);
-    }
-
+    ]);
+   }
 }
