@@ -49,33 +49,45 @@ class BookingController extends Controller
     // 3. Book a hall
     public function book(Request $request)
     {
-        $request->validate([
-            'hall_id' => 'required|exists:halls,id',
-            'booking_date' => 'required|date',
-            'time_slot' => 'required|string'
-        ]);
+    $request->validate([
+        'hall_id' => 'required|exists:halls,id',
+        'booking_date' => 'required|date',
+        'time_slot' => 'required|string',
+        'guests' => 'required|integer|min:1'
+    ]);
 
-        // check availability
-        $exists = Booking::where('hall_id', $request->hall_id)
-            ->where('booking_date', $request->booking_date)
-            ->where('time_slot', $request->time_slot)
-            ->whereIn('status', ['pending', 'approved'])
-            ->exists();
+    // prevent duplicate by same user
+    $duplicate = Booking::where('hall_id', $request->hall_id)
+        ->where('user_id', Auth::id())
+        ->first();
 
-        if ($exists) {
-            return response()->json(['message' => 'Hall not available at this time'], 400);
-        }
-
-        $booking = Booking::create([
-            'user_id' => Auth::id(),
-            'hall_id' => $request->hall_id,
-            'booking_date' => $request->booking_date,
-            'time_slot' => $request->time_slot,
-            'status' => 'pending'
-        ]);
-
-        return response()->json(['message' => 'Booking request created', 'booking' => $booking], 201);
+    if ($duplicate) {
+        return response()->json(['message' => 'You already requested this hall'], 409);
     }
+
+    // check availability
+    $exists = Booking::where('hall_id', $request->hall_id)
+        ->where('booking_date', $request->booking_date)
+        ->where('time_slot', $request->time_slot)
+        ->whereIn('status', ['pending','approved'])
+        ->exists();
+
+    if ($exists) {
+        return response()->json(['message' => 'Hall not available at this time'], 400);
+    }
+
+    $booking = Booking::create([
+        'user_id' => Auth::id(),
+        'hall_id' => $request->hall_id,
+        'booking_date' => $request->booking_date,
+        'time_slot' => $request->time_slot,
+        'guests' => $request->guests,
+        'status' => 'pending'
+    ]);
+
+    return response()->json(['message' => 'Booking request sent to hall owner for approval', 'booking' => $booking], 201);
+    }
+
 
     // 4. Manage booking request (Hall Owner Accept/Reject)
     public function manage(Request $request, $id)
@@ -103,5 +115,19 @@ class BookingController extends Controller
         $bookings = Booking::with('hall')->where('user_id', Auth::id())->get();
         return response()->json($bookings);
     }
-}
+    
+    // Owner: View bookings for halls they own
+    public function ownerBookings()
+    {
+    $ownerId = Auth::id();
 
+    $bookings = Booking::with(['hall', 'user'])
+        ->whereHas('hall', function ($q) use ($ownerId) {
+            $q->where('owner_id', $ownerId);
+        })
+        ->orderBy('booking_date', 'asc')
+        ->get();
+
+    return response()->json($bookings);
+    }
+}
