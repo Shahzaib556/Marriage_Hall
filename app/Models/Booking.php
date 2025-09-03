@@ -10,14 +10,23 @@ class Booking extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'hall_id', 'booking_date', 'time_slot', 'status'
+        'user_id',
+        'hall_id',
+        'booking_date',
+        'time_slot',
+        'status',
+        'guests' // 👉 add this if you want to save guest count
     ];
 
-    public function user() {
+    // Each booking belongs to a user (the one who booked)
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function hall() {
+    // Each booking belongs to a hall
+    public function hall()
+    {
         return $this->belongsTo(Hall::class);
     }
 }
