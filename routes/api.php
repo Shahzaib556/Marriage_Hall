@@ -54,7 +54,7 @@ Route::get('/halls', [HallController::class, 'index']);
 Route::get('/halls/approved', [HallController::class, 'approvedHalls']);
 
 /* ----------------- ADMIN DASHBOARD ROUTE ----------------- */
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'overview']);
 });
 

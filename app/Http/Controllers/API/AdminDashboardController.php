@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Hall;
 use App\Models\Booking;
-use App\Models\Payment;
 use Illuminate\Http\Request;
 
 class AdminDashboardController extends Controller
@@ -19,11 +18,15 @@ class AdminDashboardController extends Controller
         $totalHalls = Hall::count();
         $activeBookings = Booking::where('status', 'Approved')->count();
 
-        // Revenue (if payments table exists)
-        $revenue = Payment::sum('amount');
+        // Revenue removed (since no payments yet)
+        $revenue = 0;
 
         // Recent Users
-        $recentUsers = User::latest()->take(5)->get(['id', 'name', 'role', 'status']);
+       $recentUsers = User::where('role', '!=', 'admin') // exclude admins
+            ->latest()
+            ->take(5)
+            ->get(['id', 'name', 'role']);
+
 
         // Recent Bookings
         $recentBookings = Booking::with(['user:id,name', 'hall:id,name'])
