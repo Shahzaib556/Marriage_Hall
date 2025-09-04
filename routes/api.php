@@ -70,7 +70,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // Owner booking routes
-Route::middleware(['auth:sanctum', 'role:owner'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/bookings/{id}/manage', [BookingController::class, 'manage']); // 4. Owner manage bookings
     Route::get('/owner/bookings', [BookingController::class, 'ownerBookings']);
 });
