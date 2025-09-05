@@ -44,9 +44,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/halls/{id}', [HallController::class, 'destroy']);
 
     // Admin controls
-    Route::post('/halls/{id}/approve', [HallController::class, 'approve'])->middleware('role:admin');
-    Route::post('/halls/{id}/deactivate', [HallController::class, 'deactivate'])->middleware('role:admin');
-    Route::get('/admin/halls', [HallController::class, 'adminHalls'])->middleware('role:admin');
+    Route::post('/halls/{id}/approve', [HallController::class, 'approve']);
+    Route::post('/halls/{id}/deactivate', [HallController::class, 'deactivate']);
+    Route::get('/admin/halls', [HallController::class, 'adminHalls']);
 });
 
 // Public routes
