@@ -9,6 +9,8 @@ use App\Http\Controllers\API\AdminDashboardController;
 use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\AdminReportController;
 use App\Http\Controllers\API\OwnerReportController;
+use App\Http\Controllers\API\ActivityController;
+
 
 
 /* ----------------- AUTH ROUTES ----------------- */
@@ -96,4 +98,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 Route::middleware(['auth:sanctum', 'role:owner'])->prefix('owner')->group(function () {
     Route::get('/reports', [OwnerReportController::class, 'reports']);
+});
+
+// activity routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    // User activities
+    Route::get('/activities/my', [ActivityController::class, 'myActivities'])->middleware('role:user');
+
+    // Owner activities
+    Route::get('/activities/owner', [ActivityController::class, 'ownerActivities'])->middleware('role:owner');
 });
