@@ -7,6 +7,11 @@ use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\HallController;
 use App\Http\Controllers\API\AdminDashboardController;
 use App\Http\Controllers\API\BookingController;
+use App\Http\Controllers\API\AdminReportController;
+use App\Http\Controllers\API\OwnerReportController;
+use App\Http\Controllers\API\ActivityController;
+
+
 
 /* ----------------- AUTH ROUTES ----------------- */
 Route::post('/register', [AuthController::class, 'register']);
@@ -80,4 +85,26 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::get('/bookings', [BookingController::class, 'allBookings']); // 6. All bookings
     Route::put('/bookings/{id}/update', [BookingController::class, 'adminUpdate']); // 7. Update booking
     Route::get('/bookings/stats', [BookingController::class, 'bookingStats']); // 8. Stats
+});
+
+
+// admin report routes
+
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/admin/reports', [AdminReportController::class, 'reports']);
+});
+
+// owner report routes
+
+Route::middleware(['auth:sanctum', 'role:owner'])->prefix('owner')->group(function () {
+    Route::get('/reports', [OwnerReportController::class, 'reports']);
+});
+
+// activity routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    // User activities
+    Route::get('/activities/my', [ActivityController::class, 'myActivities'])->middleware('role:user');
+
+    // Owner activities
+    Route::get('/activities/owner', [ActivityController::class, 'ownerActivities'])->middleware('role:owner');
 });

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\API\ActivityController;
 use App\Models\Booking;
 use App\Models\Hall;
 use Illuminate\Http\Request;
@@ -10,10 +11,10 @@ use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
-    // 1. Search halls by location, date, capacity, price
+    // 1. Search halls
     public function search(Request $request)
     {
-        $query = Hall::where('status', 'approved'); // Only approved halls
+        $query = Hall::where('status', 'approved');
 
         if ($request->location) {
             $query->where('location', 'LIKE', "%{$request->location}%");
@@ -39,7 +40,7 @@ class BookingController extends Controller
     {
         $request->validate([
             'date' => 'required|date',
-            'time_slot' => 'required|string|in:afternoon,evening' // ✅ Only these slots
+            'time_slot' => 'required|string|in:afternoon,evening'
         ]);
 
         $exists = Booking::where('hall_id', $hall_id)
@@ -51,17 +52,16 @@ class BookingController extends Controller
         return response()->json(['available' => !$exists]);
     }
 
-    // 3. Book a hall
+    // 3. Book a hall (User)
     public function book(Request $request)
     {
         $request->validate([
             'hall_id' => 'required|exists:halls,id',
             'booking_date' => 'required|date',
-            'time_slot' => 'required|string|in:afternoon,evening', // ✅ Only valid slots
+            'time_slot' => 'required|string|in:afternoon,evening',
             'guests' => 'required|integer|min:1'
         ]);
 
-        // prevent duplicate booking by same user on same date & slot
         $duplicate = Booking::where('hall_id', $request->hall_id)
             ->where('user_id', Auth::id())
             ->where('booking_date', $request->booking_date)
@@ -69,10 +69,9 @@ class BookingController extends Controller
             ->first();
 
         if ($duplicate) {
-            return response()->json(['message' => 'You already booked/requested this hall at that time'], 409);
+            return response()->json(['message' => 'You already booked this hall at that time'], 409);
         }
 
-        // check availability
         $exists = Booking::where('hall_id', $request->hall_id)
             ->where('booking_date', $request->booking_date)
             ->where('time_slot', $request->time_slot)
@@ -92,10 +91,17 @@ class BookingController extends Controller
             'status' => 'pending'
         ]);
 
-        return response()->json(['message' => 'Booking request sent to hall owner for approval', 'booking' => $booking], 201);
+        // ✅ Log user activity
+        ActivityController::log(
+            'user',
+            'Booking Created',
+            "User #" . Auth::id() . " booked hall #{$request->hall_id} on {$request->booking_date} ({$request->time_slot})"
+        );
+
+        return response()->json(['message' => 'Booking request sent', 'booking' => $booking], 201);
     }
 
-    // 4. Manage booking request (Hall Owner Accept/Reject)
+    // 4. Manage booking request (Owner)
     public function manage(Request $request, $id)
     {
         $request->validate([
@@ -104,7 +110,6 @@ class BookingController extends Controller
 
         $booking = Booking::findOrFail($id);
 
-        // only hall owner can manage
         if (Auth::id() !== $booking->hall->owner_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -112,10 +117,17 @@ class BookingController extends Controller
         $booking->status = $request->status;
         $booking->save();
 
+        // ✅ Log owner activity
+        ActivityController::log(
+            'owner',
+            "Booking {$request->status}",
+            "Owner #" . Auth::id() . " {$request->status} booking #{$booking->id} for hall #{$booking->hall_id}"
+        );
+
         return response()->json(['message' => 'Booking updated', 'booking' => $booking]);
     }
 
-    // 5. View booking status (User Dashboard)
+    // 5. View booking status (User)
     public function myBookings()
     {
         $bookings = Booking::with('hall')
@@ -125,7 +137,7 @@ class BookingController extends Controller
         return response()->json($bookings);
     }
 
-    // Owner: View bookings for halls they own
+    // 6. Owner: View bookings
     public function ownerBookings()
     {
         $ownerId = Auth::id();
@@ -140,9 +152,7 @@ class BookingController extends Controller
         return response()->json($bookings);
     }
 
-    /* ---------------------- ADMIN APIS ---------------------- */
-
-    // 6. View all bookings (Admin only)
+    // 7. Admin: View all bookings
     public function allBookings()
     {
         $bookings = Booking::with(['user:id,name,email', 'hall:id,name,location'])
@@ -152,7 +162,7 @@ class BookingController extends Controller
         return response()->json($bookings);
     }
 
-    // 7. Admin update booking status
+    // 8. Admin update status
     public function adminUpdate(Request $request, $id)
     {
         $request->validate([
@@ -166,7 +176,7 @@ class BookingController extends Controller
         return response()->json(['message' => 'Booking status updated by admin', 'booking' => $booking]);
     }
 
-    // 8. Booking statistics (Admin Dashboard)
+    // 9. Booking statistics (Admin)
     public function bookingStats()
     {
         return response()->json([
@@ -178,24 +188,29 @@ class BookingController extends Controller
         ]);
     }
     
-    // User: Cancel booking
+    // 10. User cancel booking
     public function cancel($id)
     {
         $booking = Booking::findOrFail($id);
-    
-        // Ensure booking belongs to logged-in user
+
         if ($booking->user_id !== Auth::id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-    
-        // Ensure booking is not already cancelled/rejected
+
         if (in_array($booking->status, ['cancelled', 'rejected'])) {
             return response()->json(['message' => 'This booking is already ' . $booking->status], 400);
         }
-    
+
         $booking->status = 'cancelled';
         $booking->save();
-    
+
+        // ✅ Log user activity
+        ActivityController::log(
+            'user',
+            'Booking Cancelled',
+            "User #" . Auth::id() . " cancelled booking #{$booking->id} for hall #{$booking->hall_id}"
+        );
+
         return response()->json([
             'message' => 'Booking cancelled successfully',
             'booking' => $booking
