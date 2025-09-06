@@ -58,6 +58,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
 // Public routes
 Route::get('/halls', [HallController::class, 'index']);
 Route::get('/halls/approved', [HallController::class, 'approvedHalls']);
+// new route
+Route::get('/halls/previously-booked', [HallController::class, 'previouslyBookedHalls']);
+
 
 /* ----------------- ADMIN DASHBOARD ROUTE ----------------- */
 Route::middleware(['auth:sanctum'])->group(function () {

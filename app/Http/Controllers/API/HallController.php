@@ -44,58 +44,56 @@ class HallController extends Controller
         return response()->json(['message' => 'Hall submitted for approval', 'hall' => $hall], 201);
     }
 
+    // Owner updates hall
     public function update(Request $request, $id)
     {
-    \Log::debug('Request data:', $request->all());
-    \Log::debug('Files:', $request->file() ?: []);
-    \Log::debug('Content-Type:', [$request->header('Content-Type')]);
+        \Log::debug('Request data:', $request->all());
+        \Log::debug('Files:', $request->file() ?: []);
+        \Log::debug('Content-Type:', [$request->header('Content-Type')]);
 
-    $hall = Hall::findOrFail($id);
+        $hall = Hall::findOrFail($id);
 
-    if ($hall->owner_id !== Auth::id()) {
-        return response()->json(['message' => 'Unauthorized'], 403);
-    }
-
-    $request->validate([
-        'name' => 'required|string|max:255',
-        'location' => 'required|string|max:255',
-        'capacity' => 'required|integer',
-        'pricing' => 'required|numeric',
-        'facilities' => 'nullable|array',
-        'facilities.*' => 'nullable|string|max:255',
-        'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
-    ]);
-
-    $images = $hall->images ?? []; // keep old images if none uploaded
-
-    if ($request->hasFile('images')) {
-        $newImages = [];
-        foreach ($request->file('images') as $image) {
-            $path = $image->store('halls', 'public');
-            $newImages[] = $path;
+        if ($hall->owner_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // decide: replace or merge
-        $images = $newImages; // replace old with new
-        // OR: $images = array_merge($images, $newImages); // append new to old
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'capacity' => 'required|integer',
+            'pricing' => 'required|numeric',
+            'facilities' => 'nullable|array',
+            'facilities.*' => 'nullable|string|max:255',
+            'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+        ]);
+
+        $images = $hall->images ?? [];
+
+        if ($request->hasFile('images')) {
+            $newImages = [];
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('halls', 'public');
+                $newImages[] = $path;
+            }
+            $images = $newImages; // Replace old with new
+        }
+
+        $hall->update([
+            'name' => $request->name,
+            'location' => $request->location,
+            'capacity' => $request->capacity,
+            'pricing' => $request->pricing,
+            'facilities' => $request->facilities,
+            'images' => $images,
+        ]);
+
+        return response()->json([
+            'message' => 'Hall updated successfully',
+            'hall' => $hall
+        ]);
     }
 
-    $hall->update([
-        'name' => $request->name,
-        'location' => $request->location,
-        'capacity' => $request->capacity,
-        'pricing' => $request->pricing,
-        'facilities' => $request->facilities,
-        'images' => $images,
-    ]);
-
-    return response()->json([
-        'message' => 'Hall updated successfully',
-        'hall' => $hall
-    ]);
-    }
-
-
+    // Owner halls list
     public function myHalls()
     {
         $halls = Hall::where('owner_id', Auth::id())->get();
@@ -122,7 +120,7 @@ class HallController extends Controller
         return response()->json(['message' => 'Hall deactivated successfully']);
     }
 
-    // Delete hall (Owner can delete own, Admin can delete all)
+    // Delete hall
     public function destroy($id)
     {
         $hall = Hall::findOrFail($id);
@@ -142,27 +140,40 @@ class HallController extends Controller
         return response()->json($halls);
     }
 
-    //get all halls for admin with owner info
+    // Admin view all halls with owner info
     public function adminHalls()
     {
-        //check is user is admin
-        if(Auth::user()->role !== 'admin'){
+        if (Auth::user()->role !== 'admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-        $halls = Hall::with('owner') ->get();
+        $halls = Hall::with('owner')->get();
         return response()->json($halls);
     }
 
-    // app/Http/Controllers/API/HallController.php
+    // Approved halls only
+    public function approvedHalls()
+    {
+        $halls = Hall::where('status', 'approved')->get();
 
-  public function approvedHalls()
-   {
-    $halls = Hall::where('status', 'approved')->get();
+        return response()->json([
+            'status' => true,
+            'message' => 'Approved halls fetched successfully',
+            'data' => $halls
+        ]);
+    }
 
-    return response()->json([
-        'status' => true,
-        'message' => 'Approved halls fetched successfully',
-        'data' => $halls
-    ]);
-   }
+    // ✅ New: Halls that have been booked at least once
+    public function previouslyBookedHalls()
+    {
+        $halls = Hall::whereHas('bookings') // only halls with bookings
+                     ->withCount('bookings')
+                     ->with('owner:id,name,email')
+                     ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Previously booked halls fetched successfully',
+            'data' => $halls
+        ]);
+    }
 }
