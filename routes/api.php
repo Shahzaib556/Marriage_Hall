@@ -25,12 +25,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/owner/dashboard', fn() => ['message' => 'Owner area']);
     });
 
-    Route::middleware(['role:admin'])->prefix('admin')->group(function () {
-        Route::get('/users', [UserController::class, 'index']);
-        Route::get('/users/{id}', [UserController::class, 'show']);
-        Route::put('/users/{id}', [UserController::class, 'update']);
-        Route::delete('/users/{id}', [UserController::class, 'destroy']);
-    });
+   Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+    Route::get('/users', [UserController::class, 'index']);
+    Route::get('/users/{id}', [UserController::class, 'show']);
+    Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
+});
+
 });
 
 /* ----------------- PROFILE ROUTES ----------------- */
@@ -81,7 +82,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 // Admin booking routes
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::get('/bookings', [BookingController::class, 'allBookings']); // 6. All bookings
     Route::put('/bookings/{id}/update', [BookingController::class, 'adminUpdate']); // 7. Update booking
     Route::get('/bookings/stats', [BookingController::class, 'bookingStats']); // 8. Stats
@@ -90,21 +91,22 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 
 // admin report routes
 
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/admin/reports', [AdminReportController::class, 'reports']);
 });
 
 // owner report routes
 
-Route::middleware(['auth:sanctum', 'role:owner'])->prefix('owner')->group(function () {
+Route::middleware(['auth:sanctum'])->prefix('owner')->group(function () {
     Route::get('/reports', [OwnerReportController::class, 'reports']);
 });
+
 
 // activity routes
 Route::middleware(['auth:sanctum'])->group(function () {
     // User activities
-    Route::get('/activities/my', [ActivityController::class, 'myActivities'])->middleware('role:user');
+    Route::get('/activities/my', [ActivityController::class, 'myActivities']);
 
     // Owner activities
-    Route::get('/activities/owner', [ActivityController::class, 'ownerActivities'])->middleware('role:owner');
+    Route::get('/activities/owner', [ActivityController::class, 'ownerActivities']);
 });

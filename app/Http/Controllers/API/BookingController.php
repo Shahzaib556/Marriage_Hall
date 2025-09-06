@@ -152,29 +152,45 @@ class BookingController extends Controller
         return response()->json($bookings);
     }
 
-    // 7. Admin: View all bookings
-    public function allBookings()
-    {
-        $bookings = Booking::with(['user:id,name,email', 'hall:id,name,location'])
-            ->latest()
-            ->get();
+   // 7. Admin: View all bookings
+public function allBookings(Request $request)
+{
+    $days = $request->query('days', 7); // default to 7 if not provided
 
-        return response()->json($bookings);
-    }
+    $bookings = Booking::with(['user:id,name,email', 'hall:id,name,location,pricing'])
+        ->where('created_at', '>=', now()->subDays($days))
+        ->latest()
+        ->get();
+
+    return response()->json($bookings);
+}
+
 
     // 8. Admin update status
-    public function adminUpdate(Request $request, $id)
-    {
-        $request->validate([
-            'status' => 'required|in:approved,rejected,cancelled'
-        ]);
+   public function adminUpdate(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|in:approved,rejected,cancelled'
+    ]);
 
-        $booking = Booking::findOrFail($id);
-        $booking->status = $request->status;
-        $booking->save();
+    $booking = Booking::findOrFail($id);
 
-        return response()->json(['message' => 'Booking status updated by admin', 'booking' => $booking]);
+    // Only allow admin to change if booking is still pending
+    if ($booking->status !== 'pending') {
+        return response()->json([
+            'message' => 'Admin can only update pending bookings'
+        ], 403);
     }
+
+    $booking->status = $request->status;
+    $booking->save();
+
+    return response()->json([
+        'message' => 'Booking status updated by admin',
+        'booking' => $booking
+    ]);
+}
+
 
     // 9. Booking statistics (Admin)
     public function bookingStats()

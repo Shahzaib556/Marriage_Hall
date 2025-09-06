@@ -10,9 +10,13 @@ class UserController extends Controller
 {
     // List all users (admin only)
     public function index()
-    {
-        return response()->json(User::orderBy('created_at', 'desc')->paginate(20));
-    }
+   {
+    return response()->json(
+        User::where('role', '!=', 'admin') // exclude admins
+            ->orderBy('created_at', 'desc')
+            ->paginate(20)
+    );
+   }
 
     // Show one user
     public function show($id)

@@ -17,23 +17,23 @@ class AdminReportController extends Controller
         $totalBookings = Booking::count();
 
         // 2. Bookings by status
-        $bookingsByStatus = Booking::selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+        $bookingsByStatus = Booking::selectRaw('bookings.status, COUNT(*) as total')
+            ->groupBy('bookings.status')
+            ->pluck('total', 'bookings.status');
 
         // 3. Bookings by month
-        $monthlyBookings = Booking::selectRaw('MONTH(booking_date) as month, COUNT(*) as total')
+        $monthlyBookings = Booking::selectRaw('MONTH(bookings.booking_date) as month, COUNT(*) as total')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month');
 
         // 4. Total Revenue (only approved bookings)
-        $totalRevenue = Booking::where('status', 'approved')
+        $totalRevenue = Booking::where('bookings.status', 'approved')
             ->join('halls', 'bookings.hall_id', '=', 'halls.id')
             ->sum('halls.pricing');
 
         // 5. Revenue by hall
-        $revenueByHall = Booking::where('status', 'approved')
+        $revenueByHall = Booking::where('bookings.status', 'approved')
             ->join('halls', 'bookings.hall_id', '=', 'halls.id')
             ->selectRaw('halls.name, SUM(halls.pricing) as revenue')
             ->groupBy('halls.name')
@@ -41,23 +41,23 @@ class AdminReportController extends Controller
             ->get();
 
         // 6. Revenue by month
-        $revenueByMonth = Booking::where('status', 'approved')
+        $revenueByMonth = Booking::where('bookings.status', 'approved')
             ->join('halls', 'bookings.hall_id', '=', 'halls.id')
-            ->selectRaw('MONTH(booking_date) as month, SUM(halls.pricing) as revenue')
+            ->selectRaw('MONTH(bookings.booking_date) as month, SUM(halls.pricing) as revenue')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('revenue', 'month');
 
         // 7. Popular halls by bookings
-        $popularHallsByBookings = Booking::selectRaw('hall_id, COUNT(*) as total_bookings')
-            ->groupBy('hall_id')
+        $popularHallsByBookings = Booking::selectRaw('bookings.hall_id, COUNT(*) as total_bookings')
+            ->groupBy('bookings.hall_id')
             ->orderByDesc('total_bookings')
             ->with('hall:id,name')
             ->take(5)
             ->get();
 
         // 8. Popular halls by revenue
-        $popularHallsByRevenue = Booking::where('status', 'approved')
+        $popularHallsByRevenue = Booking::where('bookings.status', 'approved')
             ->join('halls', 'bookings.hall_id', '=', 'halls.id')
             ->selectRaw('halls.id, halls.name, SUM(halls.pricing) as revenue')
             ->groupBy('halls.id', 'halls.name')

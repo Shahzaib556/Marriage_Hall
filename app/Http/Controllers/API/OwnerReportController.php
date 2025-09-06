@@ -18,27 +18,28 @@ class OwnerReportController extends Controller
         // 1. Total bookings for my halls
         $totalBookings = Booking::whereHas('hall', function ($q) use ($ownerId) {
                 $q->where('owner_id', $ownerId);
-            })->count();
+            })
+            ->count();
 
         // 2. Bookings by status
         $bookingsByStatus = Booking::whereHas('hall', function ($q) use ($ownerId) {
                 $q->where('owner_id', $ownerId);
             })
-            ->selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+            ->selectRaw('bookings.status, COUNT(*) as total')
+            ->groupBy('bookings.status')
+            ->pluck('total', 'bookings.status');
 
         // 3. Monthly bookings
         $monthlyBookings = Booking::whereHas('hall', function ($q) use ($ownerId) {
                 $q->where('owner_id', $ownerId);
             })
-            ->selectRaw('MONTH(booking_date) as month, COUNT(*) as total')
+            ->selectRaw('MONTH(bookings.booking_date) as month, COUNT(*) as total')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('total', 'month');
 
         // 4. Total revenue (only approved bookings of my halls)
-        $totalRevenue = Booking::where('status', 'approved')
+        $totalRevenue = Booking::where('bookings.status', 'approved')
             ->whereHas('hall', function ($q) use ($ownerId) {
                 $q->where('owner_id', $ownerId);
             })
@@ -46,7 +47,7 @@ class OwnerReportController extends Controller
             ->sum('halls.pricing');
 
         // 5. Revenue by hall
-        $revenueByHall = Booking::where('status', 'approved')
+        $revenueByHall = Booking::where('bookings.status', 'approved')
             ->whereHas('hall', function ($q) use ($ownerId) {
                 $q->where('owner_id', $ownerId);
             })
@@ -57,12 +58,12 @@ class OwnerReportController extends Controller
             ->get();
 
         // 6. Revenue by month
-        $revenueByMonth = Booking::where('status', 'approved')
+        $revenueByMonth = Booking::where('bookings.status', 'approved')
             ->whereHas('hall', function ($q) use ($ownerId) {
                 $q->where('owner_id', $ownerId);
             })
             ->join('halls', 'bookings.hall_id', '=', 'halls.id')
-            ->selectRaw('MONTH(booking_date) as month, SUM(halls.pricing) as revenue')
+            ->selectRaw('MONTH(bookings.booking_date) as month, SUM(halls.pricing) as revenue')
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('revenue', 'month');
