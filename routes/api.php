@@ -10,7 +10,7 @@ use App\Http\Controllers\API\BookingController;
 use App\Http\Controllers\API\AdminReportController;
 use App\Http\Controllers\API\OwnerReportController;
 use App\Http\Controllers\API\ActivityController;
-
+use App\Http\Controllers\API\ReviewController;
 
 
 /* ----------------- AUTH ROUTES ----------------- */
@@ -109,4 +109,23 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Owner activities
     Route::get('/activities/owner', [ActivityController::class, 'ownerActivities']);
+});
+
+
+// review routes
+
+// User Routes (must be logged in)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::put('/reviews/{id}', [ReviewController::class, 'update']);
+    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
+});
+
+// Public (anyone can see hall reviews)
+Route::get('/halls/{hall_id}/reviews', [ReviewController::class, 'hallReviews']);
+Route::get('/halls/{hall_id}/rating', [ReviewController::class, 'averageRating']);
+
+// Admin Routes
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/admin/reviews', [ReviewController::class, 'allReviews']);
 });

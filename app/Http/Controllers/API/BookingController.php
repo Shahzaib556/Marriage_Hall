@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
-    // 1. Search halls
+    // 1. Search halls (User)
     public function search(Request $request)
     {
         $query = Hall::where('status', 'approved');
@@ -32,10 +32,18 @@ class BookingController extends Controller
             });
         }
 
+        // ✅ Log user activity
+        ActivityController::log(
+            'user',
+            'Hall Search',
+            Auth::user()->name,
+            "User #" . Auth::id() . " searched halls with filters: " . json_encode($request->all())
+        );
+
         return response()->json($query->get());
     }
 
-    // 2. Check hall availability
+    // 2. Check hall availability (User)
     public function checkAvailability($hall_id, Request $request)
     {
         $request->validate([
@@ -48,6 +56,14 @@ class BookingController extends Controller
             ->where('time_slot', $request->time_slot)
             ->whereIn('status', ['pending', 'approved'])
             ->exists();
+
+        // ✅ Log user activity
+        ActivityController::log(
+            'user',
+            'Check Availability',
+            Auth::user()->name,
+            "User #" . Auth::id() . " checked availability for hall #{$hall_id} on {$request->date} ({$request->time_slot})"
+        );
 
         return response()->json(['available' => !$exists]);
     }
@@ -95,10 +111,21 @@ class BookingController extends Controller
         ActivityController::log(
             'user',
             'Booking Created',
+            Auth::user()->name,
             "User #" . Auth::id() . " booked hall #{$request->hall_id} on {$request->booking_date} ({$request->time_slot})"
         );
 
-        return response()->json(['message' => 'Booking request sent', 'booking' => $booking], 201);
+        // ✅ Include owner bank details in response
+        $booking->load('hall.owner');
+
+        return response()->json([
+            'message' => 'Booking request sent',
+            'booking' => $booking,
+            'owner_bank_details' => [
+                'bank_name' => $booking->hall->owner->bank_name ?? null,
+                'account_number' => $booking->hall->owner->account_number ?? null,
+            ]
+        ], 201);
     }
 
     // 4. Manage booking request (Owner)
@@ -121,19 +148,26 @@ class BookingController extends Controller
         ActivityController::log(
             'owner',
             "Booking {$request->status}",
+            Auth::user()->name,
             "Owner #" . Auth::id() . " {$request->status} booking #{$booking->id} for hall #{$booking->hall_id}"
         );
 
         return response()->json(['message' => 'Booking updated', 'booking' => $booking]);
     }
 
-    // 5. View booking status (User)
+    // 5. View my bookings (User)
     public function myBookings()
     {
-        $bookings = Booking::with('hall')
-            ->where('user_id', Auth::id())
-            ->latest()
-            ->get();
+        $bookings = Booking::with(['hall.owner'])->where('user_id', Auth::id())->latest()->get();
+
+        // ✅ Log user activity
+        ActivityController::log(
+            'user',
+            'View My Bookings',
+            Auth::user()->name,
+            "User #" . Auth::id() . " viewed their bookings"
+        );
+
         return response()->json($bookings);
     }
 
@@ -149,48 +183,54 @@ class BookingController extends Controller
             ->orderBy('booking_date', 'asc')
             ->get();
 
+        // ✅ Log owner activity
+        ActivityController::log(
+            'owner',
+            'View My Halls Bookings',
+            Auth::user()->name,
+            "Owner #{$ownerId} viewed bookings for their halls"
+        );
+
         return response()->json($bookings);
     }
 
-   // 7. Admin: View all bookings
-public function allBookings(Request $request)
-{
-    $days = $request->query('days', 7); // default to 7 if not provided
+    // 7. Admin: View all bookings
+    public function allBookings(Request $request)
+    {
+        $days = $request->query('days', 7); // default to 7 if not provided
 
-    $bookings = Booking::with(['user:id,name,email', 'hall:id,name,location,pricing'])
-        ->where('created_at', '>=', now()->subDays($days))
-        ->latest()
-        ->get();
+        $bookings = Booking::with(['user:id,name,email', 'hall.owner:id,name,bank_name,account_number'])
+            ->where('created_at', '>=', now()->subDays($days))
+            ->latest()
+            ->get();
 
-    return response()->json($bookings);
-}
-
-
-    // 8. Admin update status
-   public function adminUpdate(Request $request, $id)
-{
-    $request->validate([
-        'status' => 'required|in:approved,rejected,cancelled'
-    ]);
-
-    $booking = Booking::findOrFail($id);
-
-    // Only allow admin to change if booking is still pending
-    if ($booking->status !== 'pending') {
-        return response()->json([
-            'message' => 'Admin can only update pending bookings'
-        ], 403);
+        return response()->json($bookings);
     }
 
-    $booking->status = $request->status;
-    $booking->save();
+    // 8. Admin update status
+    public function adminUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:approved,rejected,cancelled'
+        ]);
 
-    return response()->json([
-        'message' => 'Booking status updated by admin',
-        'booking' => $booking
-    ]);
-}
+        $booking = Booking::findOrFail($id);
 
+        // Only allow admin to change if booking is still pending
+        if ($booking->status !== 'pending') {
+            return response()->json([
+                'message' => 'Admin can only update pending bookings'
+            ], 403);
+        }
+
+        $booking->status = $request->status;
+        $booking->save();
+
+        return response()->json([
+            'message' => 'Booking status updated by admin',
+            'booking' => $booking
+        ]);
+    }
 
     // 9. Booking statistics (Admin)
     public function bookingStats()
@@ -203,7 +243,7 @@ public function allBookings(Request $request)
             'cancelled'        => Booking::where('status', 'cancelled')->count(),
         ]);
     }
-    
+
     // 10. User cancel booking
     public function cancel($id)
     {
@@ -224,6 +264,7 @@ public function allBookings(Request $request)
         ActivityController::log(
             'user',
             'Booking Cancelled',
+            Auth::user()->name,
             "User #" . Auth::id() . " cancelled booking #{$booking->id} for hall #{$booking->hall_id}"
         );
 

@@ -16,6 +16,8 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
+        'bank_name',        // ✅ Added for hall owners
+        'account_number',   // ✅ Added for hall owners
     ];
 
     protected $hidden = [
@@ -31,7 +33,7 @@ class User extends Authenticatable
 
     public function isHallOwner()
     {
-        return $this->role === 'hall_owner';
+        return $this->role === 'hall_owner'; // ✅ Corrected
     }
 
     public function isUser()
