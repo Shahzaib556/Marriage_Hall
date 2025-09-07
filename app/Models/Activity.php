@@ -10,7 +10,12 @@ class Activity extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'role', 'name', 'action', 'description',
+        'user_id',
+        'role',
+        'name',        // user name
+        'action',      // action type (Booking Created, Cancelled, etc.)
+        'description', // detailed description
+        'hall_name',   // ✅ new field
     ];
 
     public function user()
