@@ -31,16 +31,6 @@ class BookingController extends Controller
                     ->whereIn('status', ['pending', 'approved']);
             });
         }
-
-        // ✅ Log user activity (no single hall name here)
-        ActivityController::log(
-            'user',
-            Auth::user()->name,
-            'Hall Search',
-            'User ' . Auth::user()->name . ' searched halls with filters: ' . json_encode($request->all()),
-            null
-        );
-
         return response()->json($query->get());
     }
 
@@ -59,16 +49,6 @@ class BookingController extends Controller
             ->where('time_slot', $request->time_slot)
             ->whereIn('status', ['pending', 'approved'])
             ->exists();
-
-        // ✅ Log user activity
-        ActivityController::log(
-            'user',
-            Auth::user()->name,
-            'Check Availability',
-            "User " . Auth::user()->name . " checked availability for hall {$hall->name} on {$request->date} ({$request->time_slot})",
-            $hall->name
-        );
-
         return response()->json(['available' => !$exists]);
     }
 
@@ -156,7 +136,7 @@ class BookingController extends Controller
             'owner',
             Auth::user()->name,
             "Booking {$request->status}",
-            "Owner " . Auth::user()->name . " {$request->status} booking #{$booking->id} for hall {$booking->hall->name}",
+            "Owner " . Auth::user()->name . " {$request->status} for {$booking->hall->name}",
             $booking->hall->name
         );
 
@@ -167,16 +147,6 @@ class BookingController extends Controller
     public function myBookings()
     {
         $bookings = Booking::with(['hall.owner'])->where('user_id', Auth::id())->latest()->get();
-
-        // // ✅ Log user activity
-        // ActivityController::log(
-        //     'user',
-        //     Auth::user()->name,
-        //     'View My Bookings',
-        //     'User ' . Auth::user()->name . ' viewed their bookings',
-        //     null
-        // );
-
         return response()->json($bookings);
     }
 
@@ -191,16 +161,6 @@ class BookingController extends Controller
             })
             ->orderBy('booking_date', 'asc')
             ->get();
-
-        // // ✅ Log owner activity
-        // ActivityController::log(
-        //     'owner',
-        //     Auth::user()->name,
-        //     'View My Halls Bookings',
-        //     "Owner " . Auth::user()->name . " viewed bookings for their halls",
-        //     null
-        // );
-
         return response()->json($bookings);
     }
 
@@ -275,7 +235,7 @@ class BookingController extends Controller
             'user',
             Auth::user()->name,
             'Booking Cancelled',
-            "User " . Auth::user()->name . " cancelled booking #{$booking->id} for hall {$booking->hall->name}",
+            "User " . Auth::user()->name . " cancelled booking for {$booking->hall->name}",
             $booking->hall->name
         );
 
