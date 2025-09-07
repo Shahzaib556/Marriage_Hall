@@ -132,12 +132,12 @@ Route::get('/halls/{hall_id}/rating', [ReviewController::class, 'averageRating']
 // halll details route
 Route::get('halls/{hall}/owner', [HallController::class, 'getOwnerDetails'])->middleware('auth:sanctum');
 
-// contactus route
+// // contactus route
 
 
-// Public route to submit message
-Route::post('/contactus', [ContactUsController::class, 'store']);
+// // Public route to submit message
+// Route::post('/contactus', [ContactUsController::class, 'store']);
 
-// Admin-only routes (you can protect with middleware later)
-Route::get('/admin/contactus', [ContactUsController::class, 'index']);
-Route::delete('/admin/contactus/{id}', [ContactUsController::class, 'destroy']);
+// // Admin-only routes (you can protect with middleware later)
+// Route::get('/admin/contactus', [ContactUsController::class, 'index']);
+// Route::delete('/admin/contactus/{id}', [ContactUsController::class, 'destroy']);
