@@ -73,20 +73,30 @@ class ReviewController extends Controller
     }
 
     // 4. Admin: View all reviews
-    public function allReviews()
+   public function allReviews()
     {
-        $user = Auth::user();
+    $user = Auth::user();
 
-        if ($user->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
+    if ($user->role === 'admin') {
+        // Admin can see all reviews
         $reviews = Review::with(['user:id,name,email', 'hall:id,name,location'])
             ->latest()
             ->get();
+    } elseif ($user->role === 'owner') {
+        // Owner can only see reviews of their halls
+        $hallIds = $user->halls()->pluck('id');
 
-        return response()->json($reviews);
+        $reviews = Review::with(['user:id,name,email', 'hall:id,name,location'])
+            ->whereIn('hall_id', $hallIds)
+            ->latest()
+            ->get();
+    } else {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+    return response()->json($reviews);
+    }
+
 
     // 5. Admin: Delete a review
     public function destroy($id)
@@ -114,6 +124,31 @@ class ReviewController extends Controller
 
     return response()->json([
         'booking' => $booking
+    ]);
+    }
+
+    public function reports()
+   {
+    $owner = Auth::user();
+
+    // Example: halls owned by this owner
+    $halls = $owner->halls()->with('bookings')->get();
+
+    $revenue_by_hall = $halls->map(function ($hall) {
+        return [
+            'id' => $hall->id,
+            'name' => $hall->name,
+            'revenue' => $hall->bookings->sum('total_price'),
+            'average_rating' => round(Review::where('hall_id', $hall->id)->avg('rating'), 2),
+            'total_reviews' => Review::where('hall_id', $hall->id)->count(),
+        ];
+    });
+
+    return response()->json([
+        'total_bookings' => $halls->flatMap->bookings->count(),
+        'monthly_bookings' => $this->getMonthlyBookings($halls), // your existing logic
+        'revenue_by_hall' => $revenue_by_hall,
+        'occupancy_rate' => $this->calculateOccupancy($halls), // if you have it
     ]);
     }
 
