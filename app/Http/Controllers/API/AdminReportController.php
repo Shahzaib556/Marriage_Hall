@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use Illuminate\Http\Request;
 
 class AdminReportController extends Controller
 {
@@ -66,14 +65,14 @@ class AdminReportController extends Controller
             ->get();
 
         return response()->json([
-            'total_bookings'         => $totalBookings,
-            'bookings_by_status'     => $bookingsByStatus,
-            'monthly_bookings'       => $monthlyBookings,
-            'total_revenue'          => $totalRevenue,
-            'revenue_by_hall'        => $revenueByHall,
-            'revenue_by_month'       => $revenueByMonth,
+            'total_bookings' => $totalBookings,
+            'bookings_by_status' => $bookingsByStatus,
+            'monthly_bookings' => $monthlyBookings,
+            'total_revenue' => $totalRevenue,
+            'revenue_by_hall' => $revenueByHall,
+            'revenue_by_month' => $revenueByMonth,
             'popular_halls_bookings' => $popularHallsByBookings,
-            'popular_halls_revenue'  => $popularHallsByRevenue,
+            'popular_halls_revenue' => $popularHallsByRevenue,
         ]);
     }
 }

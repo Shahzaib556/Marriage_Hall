@@ -17,22 +17,22 @@ class OwnerReportController extends Controller
 
         // 1. Total bookings for my halls
         $totalBookings = Booking::whereHas('hall', function ($q) use ($ownerId) {
-                $q->where('owner_id', $ownerId);
-            })
+            $q->where('owner_id', $ownerId);
+        })
             ->count();
 
         // 2. Bookings by status
         $bookingsByStatus = Booking::whereHas('hall', function ($q) use ($ownerId) {
-                $q->where('owner_id', $ownerId);
-            })
+            $q->where('owner_id', $ownerId);
+        })
             ->selectRaw('bookings.status, COUNT(*) as total')
             ->groupBy('bookings.status')
             ->pluck('total', 'bookings.status');
 
         // 3. Monthly bookings
         $monthlyBookings = Booking::whereHas('hall', function ($q) use ($ownerId) {
-                $q->where('owner_id', $ownerId);
-            })
+            $q->where('owner_id', $ownerId);
+        })
             ->selectRaw('MONTH(bookings.booking_date) as month, COUNT(*) as total')
             ->groupBy('month')
             ->orderBy('month')
@@ -69,12 +69,12 @@ class OwnerReportController extends Controller
             ->pluck('revenue', 'month');
 
         return response()->json([
-            'total_bookings'     => $totalBookings,
+            'total_bookings' => $totalBookings,
             'bookings_by_status' => $bookingsByStatus,
-            'monthly_bookings'   => $monthlyBookings,
-            'total_revenue'      => $totalRevenue,
-            'revenue_by_hall'    => $revenueByHall,
-            'revenue_by_month'   => $revenueByMonth,
+            'monthly_bookings' => $monthlyBookings,
+            'total_revenue' => $totalRevenue,
+            'revenue_by_hall' => $revenueByHall,
+            'revenue_by_month' => $revenueByMonth,
         ]);
     }
 }

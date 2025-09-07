@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Review;
 use App\Models\Booking;
+use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
-    // 1. Add Review (only after approved booking)
+    // 1. User: Add Review
     public function store(Request $request)
     {
         $request->validate([
@@ -19,27 +19,36 @@ class ReviewController extends Controller
             'comment' => 'nullable|string|max:500',
         ]);
 
-        // Check if user booked this hall
-        $hasBooking = Booking::where('user_id', Auth::id())
+        $booking = Booking::where('user_id', Auth::id())
             ->where('hall_id', $request->hall_id)
             ->where('status', 'approved')
-            ->exists();
+            ->whereDate('booking_date', '<', now()) // booking must be completed
+            ->orderBy('booking_date', 'desc')
+            ->first();
 
-        if (!$hasBooking) {
-            return response()->json(['message' => 'You can only review halls you booked'], 403);
+        if (! $booking) {
+            return response()->json(['message' => 'You can only review completed bookings'], 403);
+        }
+
+        if (Review::where('booking_id', $booking->id)->exists()) {
+            return response()->json(['message' => 'You already reviewed this booking'], 400);
         }
 
         $review = Review::create([
             'user_id' => Auth::id(),
             'hall_id' => $request->hall_id,
+            'booking_id' => $booking->id,
             'rating' => $request->rating,
             'comment' => $request->comment,
         ]);
 
-        return response()->json(['message' => 'Review submitted successfully', 'review' => $review], 201);
+        return response()->json([
+            'message' => 'Review submitted successfully',
+            'review' => $review,
+        ], 201);
     }
 
-    // 2. Get all reviews for a hall
+    // 2. Public: Get all reviews for a hall
     public function hallReviews($hall_id)
     {
         $reviews = Review::with('user:id,name')
@@ -50,50 +59,7 @@ class ReviewController extends Controller
         return response()->json($reviews);
     }
 
-    // 3. User update review
-    public function update(Request $request, $id)
-    {
-        $request->validate([
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:500',
-        ]);
-
-        $review = Review::findOrFail($id);
-
-        if ($review->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $review->update($request->only('rating', 'comment'));
-
-        return response()->json(['message' => 'Review updated successfully', 'review' => $review]);
-    }
-
-    // 4. User delete review
-    public function destroy($id)
-    {
-        $review = Review::findOrFail($id);
-
-        if ($review->user_id !== Auth::id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $review->delete();
-
-        return response()->json(['message' => 'Review deleted successfully']);
-    }
-
-    // 5. Admin view all reviews
-    public function allReviews()
-    {
-        $reviews = Review::with(['user:id,name,email', 'hall:id,name,location'])
-            ->latest()
-            ->get();
-
-        return response()->json($reviews);
-    }
-
-    // 6. Average rating for a hall
+    // 3. Public: Get average rating for a hall
     public function averageRating($hall_id)
     {
         $avg = Review::where('hall_id', $hall_id)->avg('rating');
@@ -102,7 +68,38 @@ class ReviewController extends Controller
         return response()->json([
             'hall_id' => $hall_id,
             'average_rating' => round($avg, 2),
-            'total_reviews' => $count
+            'total_reviews' => $count,
         ]);
+    }
+
+    // 4. Admin: View all reviews
+    public function allReviews()
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $reviews = Review::with(['user:id,name,email', 'hall:id,name,location'])
+            ->latest()
+            ->get();
+
+        return response()->json($reviews);
+    }
+
+    // 5. Admin: Delete a review
+    public function destroy($id)
+    {
+        $user = Auth::user();
+
+        if ($user->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $review = Review::findOrFail($id);
+        $review->delete();
+
+        return response()->json(['message' => 'Review deleted successfully']);
     }
 }

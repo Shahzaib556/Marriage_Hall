@@ -1,17 +1,16 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\AuthController;
-use App\Http\Controllers\API\UserController;
-use App\Http\Controllers\API\ProfileController;
-use App\Http\Controllers\API\HallController;
-use App\Http\Controllers\API\AdminDashboardController;
-use App\Http\Controllers\API\BookingController;
-use App\Http\Controllers\API\AdminReportController;
-use App\Http\Controllers\API\OwnerReportController;
 use App\Http\Controllers\API\ActivityController;
+use App\Http\Controllers\API\AdminDashboardController;
+use App\Http\Controllers\API\AdminReportController;
+use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\BookingController;
+use App\Http\Controllers\API\HallController;
+use App\Http\Controllers\API\OwnerReportController;
+use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\ReviewController;
-
+use App\Http\Controllers\API\UserController;
+use Illuminate\Support\Facades\Route;
 
 /* ----------------- AUTH ROUTES ----------------- */
 Route::post('/register', [AuthController::class, 'register']);
@@ -22,15 +21,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     Route::middleware(['role:owner,admin'])->group(function () {
-        Route::get('/owner/dashboard', fn() => ['message' => 'Owner area']);
+        Route::get('/owner/dashboard', fn () => ['message' => 'Owner area']);
     });
 
-   Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
-    Route::get('/users', [UserController::class, 'index']);
-    Route::get('/users/{id}', [UserController::class, 'show']);
-    Route::put('/users/{id}', [UserController::class, 'update']);
-    Route::delete('/users/{id}', [UserController::class, 'destroy']);
-});
+    Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+        Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{id}', [UserController::class, 'show']);
+        Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+    });
 
 });
 
@@ -61,7 +60,6 @@ Route::get('/halls/approved', [HallController::class, 'approvedHalls']);
 // new route
 Route::get('/halls/previously-booked', [HallController::class, 'previouslyBookedHalls']);
 
-
 /* ----------------- ADMIN DASHBOARD ROUTE ----------------- */
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/admin/dashboard', [AdminDashboardController::class, 'overview']);
@@ -91,7 +89,6 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::get('/bookings/stats', [BookingController::class, 'bookingStats']); // 8. Stats
 });
 
-
 // admin report routes
 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -104,7 +101,6 @@ Route::middleware(['auth:sanctum'])->prefix('owner')->group(function () {
     Route::get('/reports', [OwnerReportController::class, 'reports']);
 });
 
-
 // activity routes
 Route::middleware(['auth:sanctum'])->group(function () {
     // User activities
@@ -114,13 +110,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/activities/owner', [ActivityController::class, 'ownerActivities']);
 });
 
-
 // review routes
 
-// User Routes (must be logged in)
+// User (must be logged in)
+// User (must be logged in)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store']);
-    Route::put('/reviews/{id}', [ReviewController::class, 'update']);
+});
+
+// Admin only
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/reviews', [ReviewController::class, 'allReviews']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 });
 
@@ -133,5 +133,5 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/admin/reviews', [ReviewController::class, 'allReviews']);
 });
 
-//halll details route
+// halll details route
 Route::get('halls/{hall}/owner', [HallController::class, 'getOwnerDetails'])->middleware('auth:sanctum');

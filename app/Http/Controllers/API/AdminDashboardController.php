@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Hall;
 use App\Models\Booking;
-use Illuminate\Http\Request;
+use App\Models\Hall;
+use App\Models\User;
 
 class AdminDashboardController extends Controller
 {
@@ -22,11 +21,10 @@ class AdminDashboardController extends Controller
         $revenue = 0;
 
         // Recent Users
-       $recentUsers = User::where('role', '!=', 'admin') // exclude admins
+        $recentUsers = User::where('role', '!=', 'admin') // exclude admins
             ->latest()
             ->take(5)
             ->get(['id', 'name', 'role']);
-
 
         // Recent Bookings
         $recentBookings = Booking::with(['user:id,name', 'hall:id,name'])

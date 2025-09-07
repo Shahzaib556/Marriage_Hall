@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Create a normal test user
-        if (!User::where('email', 'test@example.com')->exists()) {
+        if (! User::where('email', 'test@example.com')->exists()) {
             User::create([
                 'name' => 'Test User',
                 'email' => 'test@example.com',
@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // Create an Admin user
-        if (!User::where('email', 'admin@foodwaste.com')->exists()) {
+        if (! User::where('email', 'admin@foodwaste.com')->exists()) {
             User::create([
                 'name' => 'Super Admin',
                 'email' => 'admin@example.com',

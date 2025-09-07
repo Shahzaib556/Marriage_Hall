@@ -5,10 +5,9 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Models\Hall;
 use App\Models\User; // Add this import
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Database\Eloquent\ModelNotFoundException; // Add this import
+use Illuminate\Support\Facades\Auth; // Add this import
 
 class HallController extends Controller
 {
@@ -22,7 +21,7 @@ class HallController extends Controller
             'pricing' => 'required|numeric',
             'facilities' => 'nullable|array',
             'facilities.*' => 'nullable|string|max:255',
-            'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+            'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $images = [];
@@ -66,7 +65,7 @@ class HallController extends Controller
             'pricing' => 'required|numeric',
             'facilities' => 'nullable|array',
             'facilities.*' => 'nullable|string|max:255',
-            'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+            'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $images = $hall->images ?? [];
@@ -91,7 +90,7 @@ class HallController extends Controller
 
         return response()->json([
             'message' => 'Hall updated successfully',
-            'hall' => $hall
+            'hall' => $hall,
         ]);
     }
 
@@ -99,6 +98,7 @@ class HallController extends Controller
     public function myHalls()
     {
         $halls = Hall::where('owner_id', Auth::id())->get();
+
         return response()->json($halls);
     }
 
@@ -132,6 +132,7 @@ class HallController extends Controller
         }
 
         $hall->delete();
+
         return response()->json(['message' => 'Hall deleted successfully']);
     }
 
@@ -139,6 +140,7 @@ class HallController extends Controller
     public function index()
     {
         $halls = Hall::where('status', 'approved')->get();
+
         return response()->json($halls);
     }
 
@@ -149,6 +151,7 @@ class HallController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         $halls = Hall::with('owner')->get();
+
         return response()->json($halls);
     }
 
@@ -160,7 +163,7 @@ class HallController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Approved halls fetched successfully',
-            'data' => $halls
+            'data' => $halls,
         ]);
     }
 
@@ -168,14 +171,14 @@ class HallController extends Controller
     public function previouslyBookedHalls()
     {
         $halls = Hall::whereHas('bookings') // only halls with bookings
-                     ->withCount('bookings')
-                     ->with('owner:id,name,email')
-                     ->get();
+            ->withCount('bookings')
+            ->with('owner:id,name,email')
+            ->get();
 
         return response()->json([
             'status' => true,
             'message' => 'Previously booked halls fetched successfully',
-            'data' => $halls
+            'data' => $halls,
         ]);
     }
 
@@ -185,24 +188,24 @@ class HallController extends Controller
         try {
             // Find the hall
             $hall = Hall::findOrFail($hallId);
-            
+
             // Get the owner with bank details
             $owner = User::findOrFail($hall->owner_id); // Changed from user_id to owner_id
-            
+
             return response()->json([
                 'bank_name' => $owner->bank_name,
                 'account_number' => $owner->account_number,
                 'owner_name' => $owner->name,
-                'owner_email' => $owner->email
+                'owner_email' => $owner->email,
             ]);
-            
+
         } catch (ModelNotFoundException $e) {
             return response()->json([
-                'message' => 'Hall or owner not found'
+                'message' => 'Hall or owner not found',
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Error fetching owner details'
+                'message' => 'Error fetching owner details',
             ], 500);
         }
     }

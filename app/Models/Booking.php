@@ -15,7 +15,7 @@ class Booking extends Model
         'booking_date',
         'time_slot',
         'status',
-        'guests' // 👉 add this if you want to save guest count
+        'guests', // 👉 add this if you want to save guest count
     ];
 
     // Each booking belongs to a user (the one who booked)

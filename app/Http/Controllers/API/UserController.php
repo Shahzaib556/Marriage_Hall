@@ -3,20 +3,20 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
     // List all users (admin only)
     public function index()
-   {
-    return response()->json(
-        User::where('role', '!=', 'admin') // exclude admins
-            ->orderBy('created_at', 'desc')
-            ->paginate(20)
-    );
-   }
+    {
+        return response()->json(
+            User::where('role', '!=', 'admin') // exclude admins
+                ->orderBy('created_at', 'desc')
+                ->paginate(20)
+        );
+    }
 
     // Show one user
     public function show($id)
@@ -54,6 +54,7 @@ class UserController extends Controller
     public function destroy($id)
     {
         User::findOrFail($id)->delete();
+
         return response()->json(['message' => 'User deleted']);
     }
 }

@@ -40,18 +40,17 @@ return [
     */
 
     'debug' => (bool) env('APP_DEBUG', false),
-     
-//     'providers' => [
-//     /*
-//      * Laravel Framework Service Providers...
-//      */
-//     Illuminate\Auth\AuthServiceProvider::class,
-//     Illuminate\Broadcasting\BroadcastServiceProvider::class,
-//     // ...
-//     App\Providers\AppServiceProvider::class,
-//     App\Providers\RouteServiceProvider::class,
-// ],
 
+    //     'providers' => [
+    //     /*
+    //      * Laravel Framework Service Providers...
+    //      */
+    //     Illuminate\Auth\AuthServiceProvider::class,
+    //     Illuminate\Broadcasting\BroadcastServiceProvider::class,
+    //     // ...
+    //     App\Providers\AppServiceProvider::class,
+    //     App\Providers\RouteServiceProvider::class,
+    // ],
 
     /*
     |--------------------------------------------------------------------------

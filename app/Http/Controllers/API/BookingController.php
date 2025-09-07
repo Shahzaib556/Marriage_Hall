@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\API\ActivityController;
 use App\Models\Booking;
 use App\Models\Hall;
 use Illuminate\Http\Request;
@@ -28,7 +27,7 @@ class BookingController extends Controller
         if ($request->date) {
             $query->whereDoesntHave('bookings', function ($q) use ($request) {
                 $q->where('booking_date', $request->date)
-                  ->whereIn('status', ['pending', 'approved']);
+                    ->whereIn('status', ['pending', 'approved']);
             });
         }
 
@@ -37,7 +36,7 @@ class BookingController extends Controller
             'user',
             'Hall Search',
             Auth::user()->name,
-            "User #" . Auth::id() . " searched halls with filters: " . json_encode($request->all())
+            'User #'.Auth::id().' searched halls with filters: '.json_encode($request->all())
         );
 
         return response()->json($query->get());
@@ -48,7 +47,7 @@ class BookingController extends Controller
     {
         $request->validate([
             'date' => 'required|date',
-            'time_slot' => 'required|string|in:afternoon,evening'
+            'time_slot' => 'required|string|in:afternoon,evening',
         ]);
 
         $exists = Booking::where('hall_id', $hall_id)
@@ -62,10 +61,10 @@ class BookingController extends Controller
             'user',
             'Check Availability',
             Auth::user()->name,
-            "User #" . Auth::id() . " checked availability for hall #{$hall_id} on {$request->date} ({$request->time_slot})"
+            'User #'.Auth::id()." checked availability for hall #{$hall_id} on {$request->date} ({$request->time_slot})"
         );
 
-        return response()->json(['available' => !$exists]);
+        return response()->json(['available' => ! $exists]);
     }
 
     // 3. Book a hall (User)
@@ -75,7 +74,7 @@ class BookingController extends Controller
             'hall_id' => 'required|exists:halls,id',
             'booking_date' => 'required|date',
             'time_slot' => 'required|string|in:afternoon,evening',
-            'guests' => 'required|integer|min:1'
+            'guests' => 'required|integer|min:1',
         ]);
 
         $duplicate = Booking::where('hall_id', $request->hall_id)
@@ -91,7 +90,7 @@ class BookingController extends Controller
         $exists = Booking::where('hall_id', $request->hall_id)
             ->where('booking_date', $request->booking_date)
             ->where('time_slot', $request->time_slot)
-            ->whereIn('status', ['pending','approved'])
+            ->whereIn('status', ['pending', 'approved'])
             ->exists();
 
         if ($exists) {
@@ -104,7 +103,7 @@ class BookingController extends Controller
             'booking_date' => $request->booking_date,
             'time_slot' => $request->time_slot,
             'guests' => $request->guests,
-            'status' => 'pending'
+            'status' => 'pending',
         ]);
 
         // ✅ Log user activity
@@ -112,7 +111,7 @@ class BookingController extends Controller
             'user',
             'Booking Created',
             Auth::user()->name,
-            "User #" . Auth::id() . " booked hall #{$request->hall_id} on {$request->booking_date} ({$request->time_slot})"
+            'User #'.Auth::id()." booked hall #{$request->hall_id} on {$request->booking_date} ({$request->time_slot})"
         );
 
         // ✅ Include owner bank details in response
@@ -124,7 +123,7 @@ class BookingController extends Controller
             'owner_bank_details' => [
                 'bank_name' => $booking->hall->owner->bank_name ?? null,
                 'account_number' => $booking->hall->owner->account_number ?? null,
-            ]
+            ],
         ], 201);
     }
 
@@ -132,7 +131,7 @@ class BookingController extends Controller
     public function manage(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:approved,rejected'
+            'status' => 'required|in:approved,rejected',
         ]);
 
         $booking = Booking::findOrFail($id);
@@ -149,7 +148,7 @@ class BookingController extends Controller
             'owner',
             "Booking {$request->status}",
             Auth::user()->name,
-            "Owner #" . Auth::id() . " {$request->status} booking #{$booking->id} for hall #{$booking->hall_id}"
+            'Owner #'.Auth::id()." {$request->status} booking #{$booking->id} for hall #{$booking->hall_id}"
         );
 
         return response()->json(['message' => 'Booking updated', 'booking' => $booking]);
@@ -165,7 +164,7 @@ class BookingController extends Controller
             'user',
             'View My Bookings',
             Auth::user()->name,
-            "User #" . Auth::id() . " viewed their bookings"
+            'User #'.Auth::id().' viewed their bookings'
         );
 
         return response()->json($bookings);
@@ -211,7 +210,7 @@ class BookingController extends Controller
     public function adminUpdate(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:approved,rejected,cancelled'
+            'status' => 'required|in:approved,rejected,cancelled',
         ]);
 
         $booking = Booking::findOrFail($id);
@@ -219,7 +218,7 @@ class BookingController extends Controller
         // Only allow admin to change if booking is still pending
         if ($booking->status !== 'pending') {
             return response()->json([
-                'message' => 'Admin can only update pending bookings'
+                'message' => 'Admin can only update pending bookings',
             ], 403);
         }
 
@@ -228,7 +227,7 @@ class BookingController extends Controller
 
         return response()->json([
             'message' => 'Booking status updated by admin',
-            'booking' => $booking
+            'booking' => $booking,
         ]);
     }
 
@@ -236,11 +235,11 @@ class BookingController extends Controller
     public function bookingStats()
     {
         return response()->json([
-            'total_bookings'   => Booking::count(),
-            'approved'         => Booking::where('status', 'approved')->count(),
-            'pending'          => Booking::where('status', 'pending')->count(),
-            'rejected'         => Booking::where('status', 'rejected')->count(),
-            'cancelled'        => Booking::where('status', 'cancelled')->count(),
+            'total_bookings' => Booking::count(),
+            'approved' => Booking::where('status', 'approved')->count(),
+            'pending' => Booking::where('status', 'pending')->count(),
+            'rejected' => Booking::where('status', 'rejected')->count(),
+            'cancelled' => Booking::where('status', 'cancelled')->count(),
         ]);
     }
 
@@ -254,7 +253,7 @@ class BookingController extends Controller
         }
 
         if (in_array($booking->status, ['cancelled', 'rejected'])) {
-            return response()->json(['message' => 'This booking is already ' . $booking->status], 400);
+            return response()->json(['message' => 'This booking is already '.$booking->status], 400);
         }
 
         $booking->status = 'cancelled';
@@ -265,12 +264,12 @@ class BookingController extends Controller
             'user',
             'Booking Cancelled',
             Auth::user()->name,
-            "User #" . Auth::id() . " cancelled booking #{$booking->id} for hall #{$booking->hall_id}"
+            'User #'.Auth::id()." cancelled booking #{$booking->id} for hall #{$booking->hall_id}"
         );
 
         return response()->json([
             'message' => 'Booking cancelled successfully',
-            'booking' => $booking
+            'booking' => $booking,
         ]);
     }
 }

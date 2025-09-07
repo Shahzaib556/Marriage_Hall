@@ -13,7 +13,7 @@ class ProfileController extends Controller
     {
         return response()->json([
             'status' => true,
-            'user' => $request->user()
+            'user' => $request->user(),
         ]);
     }
 
@@ -24,7 +24,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'email' => 'sometimes|email|unique:users,email,'.$user->id,
             'phone' => 'sometimes|string|max:20',
         ]);
 
@@ -33,7 +33,7 @@ class ProfileController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Profile updated successfully',
-            'user' => $user
+            'user' => $user,
         ]);
     }
 
@@ -47,10 +47,10 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Current password is incorrect'
+                'message' => 'Current password is incorrect',
             ], 400);
         }
 
@@ -59,7 +59,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Password changed successfully'
+            'message' => 'Password changed successfully',
         ]);
     }
 }

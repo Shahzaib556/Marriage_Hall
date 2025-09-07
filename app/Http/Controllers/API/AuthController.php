@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -30,12 +30,12 @@ class AuthController extends Controller
         $data = $request->validate($rules);
 
         $user = User::create([
-            'name'           => $request->name,
-            'email'          => $request->email,
-            'phone'          => $request->phone,
-            'password'       => Hash::make($request->password),
-            'role'           => $request->role ?? 'user',
-            'bank_name'      => $request->bank_name ?? null,   // ✅ Only stored if hall_owner
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => Hash::make($request->password),
+            'role' => $request->role ?? 'user',
+            'bank_name' => $request->bank_name ?? null,   // ✅ Only stored if hall_owner
             'account_number' => $request->account_number ?? null,
         ]);
 
@@ -43,8 +43,8 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Registration successful',
-            'user'    => $user,
-            'token'   => $token,
+            'user' => $user,
+            'token' => $token,
         ], 201);
     }
 
@@ -58,11 +58,11 @@ class AuthController extends Controller
 
         $user = User::where('email', $data['email'])->first();
 
-        if (!$user || !Hash::check($data['password'], $user->password)) {
+        if (! $user || ! Hash::check($data['password'], $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        if (isset($user->is_active) && !$user->is_active) {
+        if (isset($user->is_active) && ! $user->is_active) {
             return response()->json(['message' => 'Account disabled'], 403);
         }
 
@@ -70,9 +70,9 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login successful',
-            'user'    => $user,
-            'token'   => $token,
-            'role'    => $user->role
+            'user' => $user,
+            'token' => $token,
+            'role' => $user->role,
         ]);
     }
 
@@ -80,6 +80,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
+
         return response()->json(['message' => 'Logged out successfully']);
     }
 

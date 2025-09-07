@@ -10,13 +10,12 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up()
-{
-    Schema::table('users', function (Blueprint $table) {
-        $table->enum('role', ['user', 'owner', 'admin'])->default('user');
-        $table->boolean('is_active')->default(true);
-    });
-}
-
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->enum('role', ['user', 'owner', 'admin'])->default('user');
+            $table->boolean('is_active')->default(true);
+        });
+    }
 
     /**
      * Reverse the migrations.

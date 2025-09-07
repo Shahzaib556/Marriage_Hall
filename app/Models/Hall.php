@@ -17,7 +17,7 @@ class Hall extends Model
         'pricing',
         'facilities',
         'images',
-        'status'
+        'status',
     ];
 
     protected $casts = [
