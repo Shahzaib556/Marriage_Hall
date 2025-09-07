@@ -102,4 +102,19 @@ class ReviewController extends Controller
 
         return response()->json(['message' => 'Review deleted successfully']);
     }
+    public function recentBooking($user_id)
+   {
+    $booking = Booking::where('user_id', $user_id)
+        ->where('status', 'approved')
+        ->whereDate('booking_date', '<', now())
+        ->whereDoesntHave('review')
+        ->with('hall:id,name')
+        ->orderBy('booking_date', 'desc')
+        ->first();
+
+    return response()->json([
+        'booking' => $booking
+    ]);
+    }
+
 }

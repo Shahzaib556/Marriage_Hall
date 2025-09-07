@@ -136,7 +136,7 @@ class BookingController extends Controller
             'owner',
             Auth::user()->name,
             "Booking {$request->status}",
-            "Owner " . Auth::user()->name . " {$request->status} for {$booking->hall->name}",
+            "Owner " . Auth::user()->name . " {$request->status} booking  for hall {$booking->hall->name}",
             $booking->hall->name
         );
 
@@ -235,7 +235,7 @@ class BookingController extends Controller
             'user',
             Auth::user()->name,
             'Booking Cancelled',
-            "User " . Auth::user()->name . " cancelled booking for {$booking->hall->name}",
+            "User " . Auth::user()->name . " cancelled booking for hall {$booking->hall->name}",
             $booking->hall->name
         );
 

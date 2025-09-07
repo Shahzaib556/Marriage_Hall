@@ -114,6 +114,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store']);
 });
+Route::middleware('auth:sanctum')->get('/user/recent-booking/{user}', [ReviewController::class, 'recentBooking']);
+
 
 // Admin only
 Route::middleware('auth:sanctum')->group(function () {
