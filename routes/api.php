@@ -110,9 +110,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/activities/owner', [ActivityController::class, 'ownerActivities']);
 });
 
-// review routes
-
-// User (must be logged in)
 // User (must be logged in)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reviews', [ReviewController::class, 'store']);
@@ -120,18 +117,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Admin only
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/reviews', [ReviewController::class, 'allReviews']);
-    Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
+    Route::get('/admin/reviews', [ReviewController::class, 'allReviews']);
+    Route::delete('/admin/reviews/{id}', [ReviewController::class, 'destroy']);
 });
+
 
 // Public (anyone can see hall reviews)
 Route::get('/halls/{hall_id}/reviews', [ReviewController::class, 'hallReviews']);
 Route::get('/halls/{hall_id}/rating', [ReviewController::class, 'averageRating']);
-
-// Admin Routes
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
-    Route::get('/admin/reviews', [ReviewController::class, 'allReviews']);
-});
 
 // halll details route
 Route::get('halls/{hall}/owner', [HallController::class, 'getOwnerDetails'])->middleware('auth:sanctum');
