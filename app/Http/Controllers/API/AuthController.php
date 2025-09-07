@@ -18,11 +18,11 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|unique:users,phone',
             'password' => ['required', 'confirmed', Password::min(8)],
-            'role' => 'nullable|in:user,hall_owner,admin',
+            'role' => 'nullable|in:user,owner,admin',
         ];
 
         // If hall_owner, bank_name and account_number are required
-        if ($request->role === 'hall_owner') {
+        if ($request->role === 'owner') {
             $rules['bank_name'] = 'required|string|max:255';
             $rules['account_number'] = 'required|string|max:50';
         }

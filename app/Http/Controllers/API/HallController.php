@@ -4,9 +4,11 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hall;
+use App\Models\User; // Add this import
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\ModelNotFoundException; // Add this import
 
 class HallController extends Controller
 {
@@ -175,5 +177,33 @@ class HallController extends Controller
             'message' => 'Previously booked halls fetched successfully',
             'data' => $halls
         ]);
+    }
+
+    // ✅ Get hall owner details including bank information
+    public function getOwnerDetails($hallId)
+    {
+        try {
+            // Find the hall
+            $hall = Hall::findOrFail($hallId);
+            
+            // Get the owner with bank details
+            $owner = User::findOrFail($hall->owner_id); // Changed from user_id to owner_id
+            
+            return response()->json([
+                'bank_name' => $owner->bank_name,
+                'account_number' => $owner->account_number,
+                'owner_name' => $owner->name,
+                'owner_email' => $owner->email
+            ]);
+            
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'message' => 'Hall or owner not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error fetching owner details'
+            ], 500);
+        }
     }
 }

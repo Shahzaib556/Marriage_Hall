@@ -132,3 +132,6 @@ Route::get('/halls/{hall_id}/rating', [ReviewController::class, 'averageRating']
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/admin/reviews', [ReviewController::class, 'allReviews']);
 });
+
+//halll details route
+Route::get('halls/{hall}/owner', [HallController::class, 'getOwnerDetails'])->middleware('auth:sanctum');
