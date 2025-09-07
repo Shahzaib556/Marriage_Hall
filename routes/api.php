@@ -11,6 +11,7 @@ use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\API\ContactUsController;
 
 /* ----------------- AUTH ROUTES ----------------- */
 Route::post('/register', [AuthController::class, 'register']);
@@ -130,3 +131,13 @@ Route::get('/halls/{hall_id}/rating', [ReviewController::class, 'averageRating']
 
 // halll details route
 Route::get('halls/{hall}/owner', [HallController::class, 'getOwnerDetails'])->middleware('auth:sanctum');
+
+// contactus route
+
+
+// Public route to submit message
+Route::post('/contactus', [ContactUsController::class, 'store']);
+
+// Admin-only routes (you can protect with middleware later)
+Route::get('/admin/contactus', [ContactUsController::class, 'index']);
+Route::delete('/admin/contactus/{id}', [ContactUsController::class, 'destroy']);
