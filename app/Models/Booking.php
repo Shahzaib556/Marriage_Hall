@@ -15,10 +15,10 @@ class Booking extends Model
         'booking_date',
         'time_slot',
         'status',
-        'guests', // 👉 add this if you want to save guest count
+        'guests', // add this if needed
     ];
 
-    // Each booking belongs to a user (the one who booked)
+    // Each booking belongs to a user
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -28,5 +28,11 @@ class Booking extends Model
     public function hall()
     {
         return $this->belongsTo(Hall::class);
+    }
+
+    // Each booking may have one review
+    public function review()
+    {
+        return $this->hasOne(Review::class);
     }
 }
