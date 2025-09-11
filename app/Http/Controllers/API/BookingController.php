@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\API\ActivityController;
 use App\Models\Booking;
 use App\Models\Hall;
 use Illuminate\Http\Request;
@@ -31,6 +30,7 @@ class BookingController extends Controller
                     ->whereIn('status', ['pending', 'approved']);
             });
         }
+
         return response()->json($query->get());
     }
 
@@ -49,7 +49,8 @@ class BookingController extends Controller
             ->where('time_slot', $request->time_slot)
             ->whereIn('status', ['pending', 'approved'])
             ->exists();
-        return response()->json(['available' => !$exists]);
+
+        return response()->json(['available' => ! $exists]);
     }
 
     // 3. Book a hall (User)
@@ -98,7 +99,7 @@ class BookingController extends Controller
             'user',
             Auth::user()->name,
             'Booking Created',
-            "User " . Auth::user()->name . " booked hall {$hall->name} on {$request->booking_date} ({$request->time_slot})",
+            'User '.Auth::user()->name." booked hall {$hall->name} on {$request->booking_date} ({$request->time_slot})",
             $hall->name
         );
 
@@ -136,7 +137,7 @@ class BookingController extends Controller
             'owner',
             Auth::user()->name,
             "Booking {$request->status}",
-            "Owner " . Auth::user()->name . " {$request->status} booking  for hall {$booking->hall->name}",
+            'Owner '.Auth::user()->name." {$request->status} booking  for hall {$booking->hall->name}",
             $booking->hall->name
         );
 
@@ -147,6 +148,7 @@ class BookingController extends Controller
     public function myBookings()
     {
         $bookings = Booking::with(['hall.owner'])->where('user_id', Auth::id())->latest()->get();
+
         return response()->json($bookings);
     }
 
@@ -161,6 +163,7 @@ class BookingController extends Controller
             })
             ->orderBy('booking_date', 'asc')
             ->get();
+
         return response()->json($bookings);
     }
 
@@ -224,7 +227,7 @@ class BookingController extends Controller
         }
 
         if (in_array($booking->status, ['cancelled', 'rejected'])) {
-            return response()->json(['message' => 'This booking is already ' . $booking->status], 400);
+            return response()->json(['message' => 'This booking is already '.$booking->status], 400);
         }
 
         $booking->status = 'cancelled';
@@ -235,7 +238,7 @@ class BookingController extends Controller
             'user',
             Auth::user()->name,
             'Booking Cancelled',
-            "User " . Auth::user()->name . " cancelled booking for hall {$booking->hall->name}",
+            'User '.Auth::user()->name." cancelled booking for hall {$booking->hall->name}",
             $booking->hall->name
         );
 

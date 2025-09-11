@@ -5,13 +5,13 @@ use App\Http\Controllers\API\AdminDashboardController;
 use App\Http\Controllers\API\AdminReportController;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BookingController;
+use App\Http\Controllers\API\ContactUsController;
 use App\Http\Controllers\API\HallController;
 use App\Http\Controllers\API\OwnerReportController;
 use App\Http\Controllers\API\ProfileController;
 use App\Http\Controllers\API\ReviewController;
 use App\Http\Controllers\API\UserController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\ContactUsController;
 
 /* ----------------- AUTH ROUTES ----------------- */
 Route::post('/register', [AuthController::class, 'register']);
@@ -117,13 +117,11 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 Route::middleware('auth:sanctum')->get('/user/recent-booking/{user}', [ReviewController::class, 'recentBooking']);
 
-
 // Admin only
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/reviews', [ReviewController::class, 'allReviews']);
     Route::delete('/admin/reviews/{id}', [ReviewController::class, 'destroy']);
 });
-
 
 // Public (anyone can see hall reviews)
 Route::get('/halls/{hall_id}/reviews', [ReviewController::class, 'hallReviews']);
@@ -133,7 +131,6 @@ Route::get('/halls/{hall_id}/rating', [ReviewController::class, 'averageRating']
 Route::get('halls/{hall}/owner', [HallController::class, 'getOwnerDetails'])->middleware('auth:sanctum');
 
 // // contactus route
-
 
 // // Public route to submit message
 // Route::post('/contactus', [ContactUsController::class, 'store']);

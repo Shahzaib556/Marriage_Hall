@@ -11,40 +11,39 @@ use Illuminate\Support\Facades\Auth;
 class ReviewController extends Controller
 {
     // 1. User: Add Review
-   public function store(Request $request)
-   {
-    $request->validate([
-        'hall_id'    => 'required|exists:halls,id',
-        'booking_id' => 'required|exists:bookings,id|unique:reviews,booking_id',
-        'rating'     => 'required|integer|min:1|max:5',
-        'comment'    => 'nullable|string|max:500',
-    ]);
+    public function store(Request $request)
+    {
+        $request->validate([
+            'hall_id' => 'required|exists:halls,id',
+            'booking_id' => 'required|exists:bookings,id|unique:reviews,booking_id',
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:500',
+        ]);
 
-    $booking = Booking::where('id', $request->booking_id)
-        ->where('user_id', Auth::id())
-        ->where('hall_id', $request->hall_id)
-        ->where('status', 'approved')
-        ->whereDate('booking_date', '<', now()) // booking must be completed
-        ->first();
+        $booking = Booking::where('id', $request->booking_id)
+            ->where('user_id', Auth::id())
+            ->where('hall_id', $request->hall_id)
+            ->where('status', 'approved')
+            ->whereDate('booking_date', '<', now()) // booking must be completed
+            ->first();
 
-    if (! $booking) {
-        return response()->json(['message' => 'Invalid booking or not eligible for review'], 403);
+        if (! $booking) {
+            return response()->json(['message' => 'Invalid booking or not eligible for review'], 403);
+        }
+
+        $review = Review::create([
+            'user_id' => Auth::id(),
+            'hall_id' => $request->hall_id,
+            'booking_id' => $booking->id,
+            'rating' => $request->rating,
+            'comment' => $request->comment,
+        ]);
+
+        return response()->json([
+            'message' => 'Review submitted successfully',
+            'review' => $review,
+        ], 201);
     }
-
-    $review = Review::create([
-        'user_id'   => Auth::id(),
-        'hall_id'   => $request->hall_id,
-        'booking_id'=> $booking->id,
-        'rating'    => $request->rating,
-        'comment'   => $request->comment,
-    ]);
-
-    return response()->json([
-        'message' => 'Review submitted successfully',
-        'review'  => $review,
-    ], 201);
-    }
-
 
     // 2. Public: Get all reviews for a hall
     public function hallReviews($hall_id)
@@ -71,30 +70,29 @@ class ReviewController extends Controller
     }
 
     // 4. Admin: View all reviews
-   public function allReviews()
+    public function allReviews()
     {
-    $user = Auth::user();
+        $user = Auth::user();
 
-    if ($user->role === 'admin') {
-        // Admin can see all reviews
-        $reviews = Review::with(['user:id,name,email', 'hall:id,name,location'])
-            ->latest()
-            ->get();
-    } elseif ($user->role === 'owner') {
-        // Owner can only see reviews of their halls
-        $hallIds = $user->halls()->pluck('id');
+        if ($user->role === 'admin') {
+            // Admin can see all reviews
+            $reviews = Review::with(['user:id,name,email', 'hall:id,name,location'])
+                ->latest()
+                ->get();
+        } elseif ($user->role === 'owner') {
+            // Owner can only see reviews of their halls
+            $hallIds = $user->halls()->pluck('id');
 
-        $reviews = Review::with(['user:id,name,email', 'hall:id,name,location'])
-            ->whereIn('hall_id', $hallIds)
-            ->latest()
-            ->get();
-    } else {
-        return response()->json(['message' => 'Unauthorized'], 403);
+            $reviews = Review::with(['user:id,name,email', 'hall:id,name,location'])
+                ->whereIn('hall_id', $hallIds)
+                ->latest()
+                ->get();
+        } else {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        return response()->json($reviews);
     }
-
-    return response()->json($reviews);
-    }
-
 
     // 5. Admin: Delete a review
     public function destroy($id)
@@ -110,58 +108,57 @@ class ReviewController extends Controller
 
         return response()->json(['message' => 'Review deleted successfully']);
     }
-   public function recentBooking($user_id)
-{
-    $booking = Booking::where('user_id', $user_id)
-        ->where('status', 'approved')
-        ->whereDate('booking_date', '<', now()) // completed bookings only
-        ->whereDoesntHave('review') // exclude already reviewed
-        ->with('hall:id,name,location') // include hall info
-        ->orderBy('booking_date', 'desc')
-        ->first();
 
-    if (! $booking) {
+    public function recentBooking($user_id)
+    {
+        $booking = Booking::where('user_id', $user_id)
+            ->where('status', 'approved')
+            ->whereDate('booking_date', '<', now()) // completed bookings only
+            ->whereDoesntHave('review') // exclude already reviewed
+            ->with('hall:id,name,location') // include hall info
+            ->orderBy('booking_date', 'desc')
+            ->first();
+
+        if (! $booking) {
+            return response()->json([
+                'message' => 'No recent booking available for review',
+                'booking' => null,
+            ]);
+        }
+
         return response()->json([
-            'message' => 'No recent booking available for review',
-            'booking' => null
+            'booking' => [
+                'id' => $booking->id,          // ✅ booking_id for frontend
+                'hall_id' => $booking->hall_id,
+                'hall_name' => $booking->hall->name,
+                'hall_location' => $booking->hall->location,
+                'booking_date' => $booking->booking_date,
+            ],
         ]);
     }
 
-    return response()->json([
-        'booking' => [
-            'id'           => $booking->id,          // ✅ booking_id for frontend
-            'hall_id'      => $booking->hall_id,
-            'hall_name'    => $booking->hall->name,
-            'hall_location'=> $booking->hall->location,
-            'booking_date' => $booking->booking_date,
-        ]
-    ]);
-}
-
-
     public function reports()
-   {
-    $owner = Auth::user();
+    {
+        $owner = Auth::user();
 
-    // Example: halls owned by this owner
-    $halls = $owner->halls()->with('bookings')->get();
+        // Example: halls owned by this owner
+        $halls = $owner->halls()->with('bookings')->get();
 
-    $revenue_by_hall = $halls->map(function ($hall) {
-        return [
-            'id' => $hall->id,
-            'name' => $hall->name,
-            'revenue' => $hall->bookings->sum('total_price'),
-            'average_rating' => round(Review::where('hall_id', $hall->id)->avg('rating'), 2),
-            'total_reviews' => Review::where('hall_id', $hall->id)->count(),
-        ];
-    });
+        $revenue_by_hall = $halls->map(function ($hall) {
+            return [
+                'id' => $hall->id,
+                'name' => $hall->name,
+                'revenue' => $hall->bookings->sum('total_price'),
+                'average_rating' => round(Review::where('hall_id', $hall->id)->avg('rating'), 2),
+                'total_reviews' => Review::where('hall_id', $hall->id)->count(),
+            ];
+        });
 
-    return response()->json([
-        'total_bookings' => $halls->flatMap->bookings->count(),
-        'monthly_bookings' => $this->getMonthlyBookings($halls), // your existing logic
-        'revenue_by_hall' => $revenue_by_hall,
-        'occupancy_rate' => $this->calculateOccupancy($halls), // if you have it
-    ]);
+        return response()->json([
+            'total_bookings' => $halls->flatMap->bookings->count(),
+            'monthly_bookings' => $this->getMonthlyBookings($halls), // your existing logic
+            'revenue_by_hall' => $revenue_by_hall,
+            'occupancy_rate' => $this->calculateOccupancy($halls), // if you have it
+        ]);
     }
-
 }

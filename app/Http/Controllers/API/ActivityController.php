@@ -4,9 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityController extends Controller
 {
@@ -20,12 +19,12 @@ class ActivityController extends Controller
 
         // Insert new activity
         Activity::create([
-            'user_id'    => Auth::id(),
-            'role'       => $role,
-            'name'       => $name,       // user name
-            'hall_name'  => $hallName,   // new hall name field
-            'action'     => $action,
-            'description'=> $description,
+            'user_id' => Auth::id(),
+            'role' => $role,
+            'name' => $name,       // user name
+            'hall_name' => $hallName,   // new hall name field
+            'action' => $action,
+            'description' => $description,
         ]);
     }
 
