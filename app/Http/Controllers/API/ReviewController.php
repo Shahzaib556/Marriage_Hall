@@ -11,42 +11,40 @@ use Illuminate\Support\Facades\Auth;
 class ReviewController extends Controller
 {
     // 1. User: Add Review
-    public function store(Request $request)
-    {
-        $request->validate([
-            'hall_id' => 'required|exists:halls,id',
-            'rating' => 'required|integer|min:1|max:5',
-            'comment' => 'nullable|string|max:500',
-        ]);
+   public function store(Request $request)
+   {
+    $request->validate([
+        'hall_id'    => 'required|exists:halls,id',
+        'booking_id' => 'required|exists:bookings,id|unique:reviews,booking_id',
+        'rating'     => 'required|integer|min:1|max:5',
+        'comment'    => 'nullable|string|max:500',
+    ]);
 
-        $booking = Booking::where('user_id', Auth::id())
-            ->where('hall_id', $request->hall_id)
-            ->where('status', 'approved')
-            ->whereDate('booking_date', '<', now()) // booking must be completed
-            ->orderBy('booking_date', 'desc')
-            ->first();
+    $booking = Booking::where('id', $request->booking_id)
+        ->where('user_id', Auth::id())
+        ->where('hall_id', $request->hall_id)
+        ->where('status', 'approved')
+        ->whereDate('booking_date', '<', now()) // booking must be completed
+        ->first();
 
-        if (! $booking) {
-            return response()->json(['message' => 'You can only review completed bookings'], 403);
-        }
-
-        if (Review::where('booking_id', $booking->id)->exists()) {
-            return response()->json(['message' => 'You already reviewed this booking'], 400);
-        }
-
-        $review = Review::create([
-            'user_id' => Auth::id(),
-            'hall_id' => $request->hall_id,
-            'booking_id' => $booking->id,
-            'rating' => $request->rating,
-            'comment' => $request->comment,
-        ]);
-
-        return response()->json([
-            'message' => 'Review submitted successfully',
-            'review' => $review,
-        ], 201);
+    if (! $booking) {
+        return response()->json(['message' => 'Invalid booking or not eligible for review'], 403);
     }
+
+    $review = Review::create([
+        'user_id'   => Auth::id(),
+        'hall_id'   => $request->hall_id,
+        'booking_id'=> $booking->id,
+        'rating'    => $request->rating,
+        'comment'   => $request->comment,
+    ]);
+
+    return response()->json([
+        'message' => 'Review submitted successfully',
+        'review'  => $review,
+    ], 201);
+    }
+
 
     // 2. Public: Get all reviews for a hall
     public function hallReviews($hall_id)
@@ -112,20 +110,34 @@ class ReviewController extends Controller
 
         return response()->json(['message' => 'Review deleted successfully']);
     }
-    public function recentBooking($user_id)
-   {
+   public function recentBooking($user_id)
+{
     $booking = Booking::where('user_id', $user_id)
         ->where('status', 'approved')
-        ->whereDate('booking_date', '<', now())
-        ->whereDoesntHave('review')
-        ->with('hall:id,name')
+        ->whereDate('booking_date', '<', now()) // completed bookings only
+        ->whereDoesntHave('review') // exclude already reviewed
+        ->with('hall:id,name,location') // include hall info
         ->orderBy('booking_date', 'desc')
         ->first();
 
-    return response()->json([
-        'booking' => $booking
-    ]);
+    if (! $booking) {
+        return response()->json([
+            'message' => 'No recent booking available for review',
+            'booking' => null
+        ]);
     }
+
+    return response()->json([
+        'booking' => [
+            'id'           => $booking->id,          // ✅ booking_id for frontend
+            'hall_id'      => $booking->hall_id,
+            'hall_name'    => $booking->hall->name,
+            'hall_location'=> $booking->hall->location,
+            'booking_date' => $booking->booking_date,
+        ]
+    ]);
+}
+
 
     public function reports()
    {
